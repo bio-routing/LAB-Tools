@@ -19,7 +19,7 @@ ip netns exec AS65200 ip addr add 169.254.200.1/31 dev veth3
 ip link set up dev veth2
 ip addr add 169.254.200.0/31 dev veth2
 
-ip netns exec AS65100 /usr/sbin/bird -c as65100.conf -s as65100.ctl
-ip netns exec AS65200 /usr/sbin/bird -c as65200.conf -s as65200.ctl
+ip netns exec AS65100 bird -c as65100.conf -s as65100.ctl
+ip netns exec AS65200 bird -c as65200.conf -s as65200.ctl
 
 
