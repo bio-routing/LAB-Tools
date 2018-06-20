@@ -57,19 +57,17 @@ class BGPTopo(Topo):
     def __init__(self):
         super(BGPTopo, self).__init__()
 
-        r1 = self.addSwitch("R1")
-        r2 = self.addSwitch("R2")
+        r1 = self.addSwitch("r1")
+        r2 = self.addSwitch("r2")
 
-        h1 = self.addNode("H1")
-        h2 = self.addNode("H2")
+        h1 = self.addNode("h1")
+        h2 = self.addNode("h2")
 
         self.addLink(r1, h1)
         self.addLink(r2, h2)
         self.addLink(r1, r2)
 
 def main():
-    os.system("killall bird")
-
     net = Mininet(topo=BGPTopo(), switch=Router)
     net.start()
 
@@ -77,23 +75,31 @@ def main():
         router.cmd("sysctl -w net.ipv4.ip_forward=1")
         router.waitOutput()
 
-    shell(net.switches[0], "bird -c ./as65100.conf -s ./as65100.ctl")
-    shell(net.switches[0], "ip addr add dev R1-eth1 10.100.0.1/24")
-    shell(net.switches[0], "ip addr add dev R1-eth2 169.254.0.1/30")
+    r1 = net.switches[0]
+    r2 = net.switches[1]
+    h1 = net.hosts[0]
+    h2 = net.hosts[1]
 
-    shell(net.switches[1], "bird -c ./as65200.conf -s ./as65200.ctl")
-    shell(net.switches[1], "ip addr add dev R2-eth1 10.200.0.1/24")
-    shell(net.switches[1], "ip addr add dev R2-eth2 169.254.0.2/30")
+    shell(r1, "bird -c ./as65100.conf -s ./as65100.ctl")
+    shell(r1, "ip addr add dev r1-eth1 10.100.0.1/24")
+    shell(r1, "ip addr add dev r1-eth2 169.254.0.1/30")
 
-    shell(net.hosts[0], "ip addr add dev H1-eth0 10.100.0.2/24")
-    shell(net.hosts[0], "ip route add 0.0.0.0/0 via 10.100.0.1")
-    shell(net.hosts[0], "ip route del 10.100.0.0/24")
-    shell(net.hosts[0], "ip route del 10.0.0.0/8")
+    shell(r2, "bird -c ./as65200.conf -s ./as65200.ctl")
+    shell(r2, "ip addr add dev r2-eth1 10.200.0.1/24")
+    shell(r2, "ip addr add dev r2-eth2 169.254.0.2/30")
 
-    shell(net.hosts[1], "ip addr add dev H2-eth0 10.200.0.2/24")
-    shell(net.hosts[1], "ip route add 0.0.0.0/0 via 10.200.0.1")
-    shell(net.hosts[0], "ip route del 10.200.0.0/24")
-    shell(net.hosts[1], "ip route del 10.0.0.0/8")
+    shell(h1, "ip addr add dev h1-eth0 10.100.0.2/24")
+    shell(h1, "ip addr del dev h1-eth0 10.0.0.1/8")
+    shell(h1, "ip route add 0.0.0.0/0 via 10.100.0.1")
+    shell(h1, "ip route del 10.100.0.0/24")
+
+    shell(h2, "ip addr add dev h2-eth0 10.200.0.2/24")
+    shell(h2, "ip addr del dev h2-eth0 10.0.0.2/8")
+    shell(h2, "ip route add 0.0.0.0/0 via 10.200.0.1")
+    shell(h2, "ip route del 10.200.0.0/24")
+
+    log("Sleep 3 seconds...")
+    os.system("sleep 3")
 
     CLI(net)
     net.stop()
@@ -101,5 +107,6 @@ def main():
     os.system("killall bird")
 
 if __name__ == "__main__":
+    os.system("killall bird")
     main()
 
