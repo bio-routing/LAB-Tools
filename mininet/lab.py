@@ -65,19 +65,18 @@ class BGPTopo(Topo):
     def __init__(self):
         super(BGPTopo, self).__init__()
 
-        bird1 = self.addSwitch("bird1")
-        bird2 = self.addSwitch("bird2")
-    #    bio = self.addSwitch("bio3")
+        bird = self.addSwitch("bird1")
+        bio = self.addSwitch("bio1")
 
         h1 = self.addNode("h1")
         h2 = self.addNode("h2")
 
-        self.addLink(bird1, h1)
-        self.addLink(bird2, h2)
+        self.addLink(bird, h1)
+        self.addLink(bio, h2)
 
-        self.addLink(bird1, bird2)
-        #self.addLink(bird1, bio)
-        #self.addLink(bio, bird2)
+        self.addLink(bird, bio)
+        #self.addLink(bird, bio)
+        #self.addLink(bio, bio)
 
 def main():
     net = Mininet(topo=BGPTopo(), switch=Router)
@@ -87,22 +86,26 @@ def main():
         router.cmd("sysctl -w net.ipv4.ip_forward=1")
         router.waitOutput()
 
-    bird1 = net.switches[0]
-    bird2 = net.switches[1]
-    #bio = net.switches[2]
+    bio = net.switches[0]
+    bird = net.switches[1]
+
+    print("bird: %s", bird)
+    print("bio: %s", bio)
 
     h1 = net.hosts[0]
     h2 = net.hosts[1]
 
-    # shell(bird2, "bird -c ./as65200.conf -s ./as65200.ctl")
-    shell(bird2, "ip addr add dev lo 169.254.200.1")
-    shell(bird2, "ip addr add dev bird2-eth1 10.200.0.1/24")
-    shell(bird2, "ip addr add dev bird2-eth2 169.254.0.2/30")
-    shell(bird2, "bio-rd -debug &")
+    # shell(bio, "bird -c ./as65200.conf -s ./as65200.ctl")
+    shell(bio, "ip addr add dev lo 169.254.200.1")
+    shell(bio, "ip addr add dev bio1-eth1 10.200.0.1/24")
+    shell(bio, "ip addr add dev bio1-eth2 169.254.0.2/30")
+    shell(bio, "sleep 1")
+    shell(bio, "bio-rd > /var/log/bio-rd.log &")
 
-    shell(bird1, "ip addr add dev bird1-eth1 10.100.0.1/24")
-    shell(bird1, "ip addr add dev bird1-eth2 169.254.0.1/30")
-    shell(bird1, "bird -c ./as65100.conf -s /tmp/as65100.ctl")
+    shell(bird, "ip addr add dev bird1-eth1 10.100.0.1/24")
+    shell(bird, "ip addr add dev bird1-eth2 169.254.0.1/30")
+    shell(bird, "sleep 1")
+    shell(bird, "bird -c ./as65100.conf -s /tmp/as65100.ctl")
 
     # shell(bio, "~/src/bio-rd/bio-rd/bio-rd")
     #shell(bio, "ip addr add dev bio3-eth1 10.300.0.1/24")
@@ -120,7 +123,7 @@ def main():
     shell(h2, "ip route del 10.200.0.0/24")
 
     log("Spawn tmux sessions")
-    mtmux(bird2, 1, "tail -f /var/log/bio-rd.log")
+    #mtmux(bio, 1, "tail -f /var/log/bio-rd.log")
     tmux(2, "sudo birdc -s /tmp/as65100.ctl")
 
     CLI(net)
